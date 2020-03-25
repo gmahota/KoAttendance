@@ -1,0 +1,31 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="nav_header_vertical_spacing">8dp</dimen>
+    <dimen name="nav_header_height">176dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="fingerprint_square_dimen">40dp</dimen>
+    <dimen name="fingerprint_square_dimen_viewport" type="float">40.0</dimen>
+    <dimen name="card_corner">2dp</dimen>
+    <dimen name="default_elevation">4dp</dimen>
+    <dimen name="logo_square_dimen">150dp</dimen>
+    <dimen name="logo_square_margin">32dp</dimen>
+    <dimen name="default_padding">16dp</dimen>
+    <dimen name="default_margin">16dp</dimen>
+    <dimen name="default_margin_end">4dp</dimen>
+    <dimen name="default_margin_small">8dp</dimen>
+    <dimen name="fingerprint_padding_horizontal">12dp</dimen>
+    <dimen name="fingerprint_padding_vertical">4dp</dimen>
+    <dimen name="fingerprint_margin">24dp</dimen>
+    <dimen name="default_padding_small">8dp</dimen>
+    <dimen name="fingerprint_margin_horizontal">20dp</dimen>
+    <dimen name="fingerprint_margin_vertical">16dp</dimen>
+    <dimen name="default_padding_large">24dp</dimen>
+
+    <dimen name="spacing_small">8dp</dimen>
+    <dimen name="spacing_medium">16dp</dimen>
+    <dimen name="spacing_medium_large">24dp</dimen>
+    <dimen name="spacing_large">32dp</dimen>
+    <dimen name="dodge_app_bar">64dp</dimen>
+</resources>
