@@ -23,6 +23,8 @@ import com.google.android.gms.fido.fido2.Fido2ApiClient
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
+
+
     private val repository = AuthRepository.getInstance(application)
 
     val signInState = repository.getSignInState()

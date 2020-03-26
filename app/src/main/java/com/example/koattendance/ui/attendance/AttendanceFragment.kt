@@ -28,6 +28,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 
 import android.content.SharedPreferences
+import android.location.Location
 
 import android.util.Base64
 import android.widget.*
@@ -36,25 +37,37 @@ import androidx.core.content.edit
 import com.example.android.fido2.ui.observeOnce
 import com.example.koattendance.DEFAULT_KEY_NAME
 import com.example.koattendance.MainActivity
+import com.example.koattendance.data.Localizacoes
 import com.example.koattendance.ui.auth_new.AuthFragment
+import com.google.firebase.FirebaseApp
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
 import java.util.concurrent.Executors
+import kotlin.collections.ArrayList
 
 
 @RequiresApi(Build.VERSION_CODES.M)
 class AttendanceFragment : Fragment() {
 
-
+    // [START declare_database_ref]
+    private lateinit var database: DatabaseReference
+    // [END declare_database_ref]
 
     private lateinit var attendanceViewModel: AttendanceViewModel
 
     private lateinit var executor: Executor
     private lateinit var biometricPrompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
+    private  lateinit var myTopLocations: DatabaseReference
 
     private lateinit var sharedPreferences: SharedPreferences
     private val keyStore: KeyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
@@ -73,15 +86,27 @@ class AttendanceFragment : Fragment() {
             textView.text = it
         })
 
+        var _Context = context!!
+        FirebaseApp.initializeApp(_Context)
+        // [START initialize_database_ref]
+        database = Firebase.database.reference
+        // [END initialize_database_ref]
+
+        myTopLocations= database.child("localizacoes")
+
+
         var btn_login = root.findViewById(R.id.btn_login) as Button
         var btn_logout = root.findViewById(R.id.btn_logout) as Button
         var positionSpinner = root.findViewById(R.id.positionSpinner) as Spinner
 
-        var _Context = context!!
+        var myList = arrayListOf<Localizacoes>()
 
-        val adapter = ArrayAdapter(_Context, android.R.layout.simple_spinner_item, listOf("None", "Top", "Bottom"))
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        positionSpinner.adapter = adapter
+        loadList { list ->  list.toCollection(myList)    }
+
+        val adapter = ArrayAdapter(_Context, android.R.layout.simple_spinner_item,myList).also {
+            arrayAdapter ->  arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            positionSpinner.adapter = arrayAdapter
+        }
 
         positionSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -90,8 +115,8 @@ class AttendanceFragment : Fragment() {
 
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 // either one will work as well
-                // val item = parent.getItemAtPosition(position) as String
-                val item = adapter.getItem(position)
+                //parent.getItemAtPosition(position)
+                val item = adapter.getItem(position)//?.nome
             }
         }
 
@@ -100,20 +125,6 @@ class AttendanceFragment : Fragment() {
         //initBiometric()
 
         sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(activity)
-
-        attendanceViewModel.signinIntent.observeOnce(requireActivity()) { intent ->
-            val a = activity
-            if (intent.hasPendingIntent() && a != null) {
-                try {
-
-                    // Launch the fingerprint dialog.
-                    intent.launchPendingIntent(a, MainActivity.REQUEST_FIDO2_SIGNIN)
-
-                } catch (e: IntentSender.SendIntentException) {
-                    Log.e("AuthFragment.TAG", "Error launching pending intent for signin request", e)
-                }
-            }
-        }
 
         var txtData =root.findViewById(R.id.txt_Data) as TextView
         var txtUser =root.findViewById(R.id.txt_Local) as TextView
@@ -158,7 +169,22 @@ class AttendanceFragment : Fragment() {
         return root
     }
 
+    fun loadList(callback: (list: List<Localizacoes>) -> Unit) {
+        myTopLocations.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onCancelled(snapshotError: DatabaseError) {
+                TODO("not implemented")
+            }
 
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list : MutableList<Localizacoes> = mutableListOf()
+                val children = snapshot!!.children
+                children.forEach {
+                    it.getValue(Localizacoes::class.java)?.let { it1 -> list.add(it1) }
+                }
+                callback(list)
+            }
+        })
+    }
 
 
     private fun canAuthenticate(){
