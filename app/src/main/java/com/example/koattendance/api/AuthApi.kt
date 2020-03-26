@@ -20,6 +20,7 @@ import android.os.Build
 import android.util.JsonReader
 import android.util.JsonToken
 import android.util.JsonWriter
+import com.example.koattendance.BuildConfig
 import com.example.koattendance.decodeBase64
 import com.example.koattendance.toBase64
 import com.google.android.gms.fido.fido2.api.common.Attachment
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeUnit
 class AuthApi {
 
     companion object {
-        private const val BASE_URL ="https://knowing-sail.glitch.me" //BuildConfig.API_BASE_URL
+        private const val BASE_URL = BuildConfig.API_BASE_URL
         private val JSON = MediaType.parse("application/json")
     }
 

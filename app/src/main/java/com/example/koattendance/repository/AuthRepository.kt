@@ -31,6 +31,7 @@ import com.example.koattendance.api.AuthApi
 import com.example.koattendance.api.Credential
 import com.google.android.gms.fido.fido2.Fido2ApiClient
 import com.google.android.gms.fido.fido2.Fido2PendingIntent
+import com.google.android.gms.tasks.Tasks
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
@@ -327,20 +328,26 @@ class AuthRepository(
                     val username = prefs.getString(PREF_USERNAME, null)!!
                     val credentialId = prefs.getString(PREF_LOCAL_CREDENTIAL_ID, null)
 
-                    // TODO(4): Call the server API: /signinRequest
-                    // - Use api.signinRequest to get a PublicKeyCredentialRequestOptions.
-                    // - Save the challenge for later use in signinResponse.
-                    // - Call fido2ApiClient.getSignIntent and create an intent to assert the
-                    //   credential.
-                    // - Pass the intent to the `result` LiveData so that the UI can open the
-                    //   fingerprint dialog.
-
+                    // Retrieve sign-in options from the server.
+                    val (options, challenge) = api.signinRequest(username, credentialId)
+                    // Save the challenge string.
+                    lastKnownChallenge = challenge
+                    // Create an Intent to open the fingerprint dialog.
+                    val task = client.getSignIntent(options)
+                    // Pass the Intent back to the UI.
+                    result.postValue(Tasks.await(task))
                 } finally {
                     processing.postValue(false)
                 }
             }
         }
         return result
+    }
+
+    fun daUser(processing: MutableLiveData<Boolean>): String {
+        val username = prefs.getString(PREF_USERNAME, null)!!
+
+        return  username
     }
 
     /**

@@ -26,6 +26,8 @@ import com.example.koattendance.ui.home.HomeFragment
 import com.example.koattendance.ui.username.UsernameFragment
 import com.google.android.gms.fido.Fido
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse
+import kotlinx.android.synthetic.main.auth_fragment.*
+import kotlinx.coroutines.channels.consumesAll
 
 class MainActivity : AppCompatActivity() {
 
@@ -46,42 +48,18 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(toolbar)
 
-        val fab: FloatingActionButton = findViewById(R.id.fab)
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
-        }
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
         val navController = findNavController(R.id.nav_host_fragment)
+
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(setOf(
-                R.id.nav_home,R.id.nav_gallery, R.id.nav_slideshow,R.id.nav_attendance), drawerLayout)
+                R.id.nav_home,R.id.nav_auth, R.id.nav_slideshow,R.id.nav_attendance), drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
         viewModel =
             ViewModelProviders.of(this).get(MainViewModel::class.java)
-
-        /*viewModel.signInState.observe(this) {
-                state ->
-            when (state) {
-//                is SignInState.SignedOut -> {
-//                    setContentView(R.layout.username_fragment)
-//                }
-//                is SignInState.SigningIn -> {
-//                    setContentView(R.layout.auth_fragment)
-//                }
-//                is SignInState.SignInError -> {
-//                    Toast.makeText(this, state.error, Toast.LENGTH_LONG).show()
-//                    // return to username prompt
-//                    setContentView(R.layout.username_fragment)
-//                }
-//                is SignInState.SignedIn -> {
-//                    setContentView(R.layout.fragment_home)
-//                }
-            }
-        }*/
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -96,8 +74,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.e("APP","AQIO")
         when (requestCode) {
             REQUEST_FIDO2_REGISTER -> {
+                Log.e("APP","111111")
                 val errorExtra = data?.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA)
                 if (errorExtra != null) {
                     val error = AuthenticatorErrorResponse.deserializeFromBytes(errorExtra)
@@ -114,7 +94,10 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+
+
             REQUEST_FIDO2_SIGNIN -> {
+                Log.e("APP","122222")
                 val errorExtra = data?.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA)
                 if (errorExtra != null) {
                     val error = AuthenticatorErrorResponse.deserializeFromBytes(errorExtra)

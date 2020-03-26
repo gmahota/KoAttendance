@@ -1,6 +1,7 @@
 package com.example.koattendance.ui.attendance
 
 import android.content.Context
+import android.content.IntentSender
 import android.os.Build
 import android.os.Bundle
 import android.security.keystore.KeyGenParameterSpec
@@ -9,9 +10,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
@@ -32,15 +30,25 @@ import javax.crypto.spec.IvParameterSpec
 import android.content.SharedPreferences
 
 import android.util.Base64
+import android.widget.*
 
 import androidx.core.content.edit
+import com.example.android.fido2.ui.observeOnce
 import com.example.koattendance.DEFAULT_KEY_NAME
+import com.example.koattendance.MainActivity
+import com.example.koattendance.ui.auth_new.AuthFragment
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 import java.util.concurrent.Executors
 
 
 @RequiresApi(Build.VERSION_CODES.M)
 class AttendanceFragment : Fragment() {
+
+
 
     private lateinit var attendanceViewModel: AttendanceViewModel
 
@@ -67,12 +75,48 @@ class AttendanceFragment : Fragment() {
 
         var btn_login = root.findViewById(R.id.btn_login) as Button
         var btn_logout = root.findViewById(R.id.btn_logout) as Button
+        var positionSpinner = root.findViewById(R.id.positionSpinner) as Spinner
+
+        var _Context = context!!
+
+        val adapter = ArrayAdapter(_Context, android.R.layout.simple_spinner_item, listOf("None", "Top", "Bottom"))
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        positionSpinner.adapter = adapter
+
+        positionSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+
+            }
+
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                // either one will work as well
+                // val item = parent.getItemAtPosition(position) as String
+                val item = adapter.getItem(position)
+            }
+        }
 
         canAuthenticate()
         //generateSecretKey_bio()
         //initBiometric()
 
         sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(activity)
+
+        attendanceViewModel.signinIntent.observeOnce(requireActivity()) { intent ->
+            val a = activity
+            if (intent.hasPendingIntent() && a != null) {
+                try {
+
+                    // Launch the fingerprint dialog.
+                    intent.launchPendingIntent(a, MainActivity.REQUEST_FIDO2_SIGNIN)
+
+                } catch (e: IntentSender.SendIntentException) {
+                    Log.e("AuthFragment.TAG", "Error launching pending intent for signin request", e)
+                }
+            }
+        }
+
+        var txtData =root.findViewById(R.id.txt_Data) as TextView
+        var txtUser =root.findViewById(R.id.txt_Local) as TextView
 
         btn_login.setOnClickListener {
 
@@ -81,7 +125,15 @@ class AttendanceFragment : Fragment() {
                 failedAction = { Log.e("e","encrypt failed") },
                 successAction = {
                     textView.text = String(it)
+                    val currentDate: String = SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS", Locale.getDefault()).format(Date())
+
+
+                    txtData.text =  "Hora de Entrada - " + currentDate
+                    txtUser.text = "Bom trabalho - " +
                     Log.d("App","encrypt success")
+
+
+
                 }
             )
 //            // Exceptions are unhandled within this snippet.
