@@ -6,7 +6,7 @@
     <eat-comment />
     <string name="sign_in">Sign In</string>
     <string name="username">Username</string>
-    <string name="sign_in_explanation">For the purpose of demonstration, this app accepts any username.</string>
+    <string name="sign_in_explanation">Coloque o seu nr. telefone, e em seguida o codigo que irá receber por SMS</string>
     <string name="next">Next</string>
 
     <!-- Auth -->
@@ -71,4 +71,12 @@
 
     <string name="register_fido2">Register FIDO2</string>
     <string name="login_fido2">Sign FIDO2</string>
+    <string name="phone">Nr. Telefone</string>
+    <string name="validationCode" >Codigo Validação</string>
+    <string name="sign_in_explanation3">OU</string>
+    <string name="validate">validar</string>
+    <string name="validationAlert">Dirija-se à sua caixa de mensagens e copie o código de validação apresentado</string>
+    <string name="usendit_user">mahotag</string>
+    <string name="usendit_password">AgnesZoe1518!</string>
+
 </resources>

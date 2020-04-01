@@ -23,9 +23,14 @@ class HomeFragment : Fragment() {
                 ViewModelProviders.of(this).get(HomeViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_home, container, false)
         val textView: TextView = root.findViewById(R.id.text_home)
-        homeViewModel.text.observe(viewLifecycleOwner, Observer {
-            textView.text = it
-        })
+
+        val isValidated = homeViewModel.getUserIsValidaded();
+
+        if(isValidated){
+            textView.text = "Bem vindo ao sistema Ko-Attendance, faça a sua entrada ou saida"
+        }else{
+            textView.text = "O seu dispositivo não se encontra registrado no sistema deverá clicar no canto superio esquerto -> Registro!"
+        }
         return root
     }
 }

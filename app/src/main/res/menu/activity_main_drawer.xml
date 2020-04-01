@@ -16,9 +16,5 @@
             android:id="@+id/nav_attendance"
             android:icon="@drawable/ic_menu_attendance"
             android:title="Entrada"/>
-        <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="Saida" />
     </group>
 </menu>

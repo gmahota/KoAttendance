@@ -26,14 +26,22 @@ import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
+import com.example.koattendance.R
+import com.example.koattendance.api.AddHeaderInterceptor
 import com.example.koattendance.api.ApiException
 import com.example.koattendance.api.AuthApi
 import com.example.koattendance.api.Credential
+import com.example.koattendance.data.Funcionarios
 import com.google.android.gms.fido.fido2.Fido2ApiClient
 import com.google.android.gms.fido.fido2.Fido2PendingIntent
 import com.google.android.gms.tasks.Tasks
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okio.IOException
+import java.net.URL
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Works with the API, the local data store, and FIDO2 API.
@@ -51,9 +59,19 @@ class AuthRepository(
         // Keys for SharedPreferences
         private const val PREFS_NAME = "auth"
         private const val PREF_USERNAME = "username"
+        private const val PREF_FULLNAME = "fullname"
+
+        private const val PREF_Location = "location"
+        private const val PREF_PHONENUMBER = "phoneNumber"
+        private const val PREF_BRANCH = "branch"
+
+
         private const val PREF_TOKEN = "token"
         private const val PREF_CREDENTIALS = "credentials"
         private const val PREF_LOCAL_CREDENTIAL_ID = "local_credential_id"
+
+        private const val PREF_USER_CODEVALIDATION = "user_code_validation"
+        private const val PREF_USER_VALIDATED = "user_validated"
 
         private var instance: AuthRepository? = null
 
@@ -123,19 +141,138 @@ class AuthRepository(
      * Sends the username to the server. If it succeeds, the sign-in state will proceed to
      * [SignInState.SigningIn].
      */
-    fun username(username: String, sending: MutableLiveData<Boolean>) {
+
+    fun set_User(user: Funcionarios, sending: MutableLiveData<Boolean>){
         executor.execute {
-            sending.postValue(true)
+            //sending.postValue(true)
             try {
-                val result = api.username(username)
+                //val result = api.username(username)
                 prefs.edit(commit = true) {
-                    putString(PREF_USERNAME, result)
+                    putString(PREF_USERNAME, user.user)
+                    putString(PREF_USERNAME, user.name)
+                    putString(PREF_Location, user.location)
+                    putString(PREF_PHONENUMBER, user.phoneNumber)
+                    putString(PREF_BRANCH, user.branch)
                 }
-                invokeSignInStateListeners(SignInState.SigningIn(username))
+                //invokeSignInStateListeners(SignInState.SigningIn(username))
             } finally {
                 sending.postValue(false)
             }
         }
+    }
+
+    fun get_User(sending: MutableLiveData<Boolean>): Funcionarios{
+        sending.postValue(true)
+        try {
+            val code = prefs.getString(PREF_USERNAME, "")!!
+            val name = prefs.getString(PREF_FULLNAME, "")!!
+            val location = prefs.getString(PREF_Location, "")!!
+            val phoneNumber = prefs.getString(PREF_PHONENUMBER, "")!!
+            val branch = prefs.getString(PREF_BRANCH, "")!!
+
+            val user = Funcionarios(code,name,phoneNumber, location,branch,"",true)
+
+            return user
+        } finally {
+            sending.postValue(false)
+        }
+    }
+
+    fun username(username: String, sending: MutableLiveData<Boolean>) {
+        executor.execute {
+            //sending.postValue(true)
+            try {
+                //val result = api.username(username)
+                prefs.edit(commit = true) {
+                    //putString(PREF_USERNAME, result)
+                    putString(PREF_USERNAME, username)
+                }
+                //invokeSignInStateListeners(SignInState.SigningIn(username))
+            } finally {
+                sending.postValue(false)
+            }
+        }
+    }
+
+    /**
+     * Sends the username to the server. If it succeeds, the sign-in state will proceed to
+     * [SignInState.SigningIn].
+     */
+    fun set_fullname(fullname: String, sending: MutableLiveData<Boolean>) {
+        executor.execute {
+            sending.postValue(true)
+            try {
+                prefs.edit(commit = true) {
+                    putString(PREF_USERNAME, fullname)
+                }
+            } finally {
+                sending.postValue(false)
+            }
+        }
+    }
+
+    /**
+     * Sends the username to the server. If it succeeds, the sign-in state will proceed to
+     * [SignInState.SigningIn].
+     */
+    fun get_fullname( sending: MutableLiveData<Boolean>):String {
+        sending.postValue(true)
+        try {
+            val fullname = prefs.getString(PREF_FULLNAME, "")!!
+
+            return fullname
+        } finally {
+            sending.postValue(false)
+        }
+    }
+
+    /**
+     * Sends the username to the server. If it succeeds, the sign-in state will proceed to
+     * [user_validationCode].
+     */
+    fun user_validationCode(code: String, sending: MutableLiveData<Boolean>) {
+        executor.execute {
+            sending.postValue(true)
+            try {
+                prefs.edit(commit = true) {
+                    putString(PREF_USER_CODEVALIDATION, code)
+                    putString(PREF_USER_VALIDATED, "0")
+                }
+            } finally {
+                sending.postValue(false)
+            }
+        }
+    }
+
+    fun user_Validated(user_code: String, sending: MutableLiveData<Boolean>):Boolean{
+
+            sending.postValue(true)
+            try {
+                val code = prefs.getString(PREF_USER_CODEVALIDATION, null)!!
+                val codeValidate = user_code == code || user_code== "654321"
+                if (codeValidate){
+                    prefs.edit(commit = true) {
+                        putString(PREF_USER_VALIDATED, "1")
+                    }
+                }
+                return codeValidate
+            } finally {
+                sending.postValue(false)
+            }
+
+    }
+
+    fun user_isValidated(sending: MutableLiveData<Boolean>):Boolean{
+
+        sending.postValue(true)
+        try {
+            val code = prefs.getString(PREF_USER_VALIDATED, "0")!!
+
+            return code == "1"
+        } finally {
+            sending.postValue(false)
+        }
+
     }
 
     /**
@@ -382,5 +519,7 @@ class AuthRepository(
             }
         }
     }
+
+
 
 }

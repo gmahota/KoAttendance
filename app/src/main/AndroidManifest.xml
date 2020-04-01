@@ -28,6 +28,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.google.firebase.auth.internal.FederatedSignInActivity"
+            tools:replace="android:launchMode"
+            android:launchMode="standard" />
     </application>
 
 </manifest>

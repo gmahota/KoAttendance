@@ -67,7 +67,7 @@ class AttendanceFragment : Fragment() {
     private lateinit var executor: Executor
     private lateinit var biometricPrompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
-    private  lateinit var myTopLocations: DatabaseReference
+
 
     private lateinit var sharedPreferences: SharedPreferences
     private val keyStore: KeyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
@@ -86,38 +86,22 @@ class AttendanceFragment : Fragment() {
             textView.text = it
         })
 
-        var _Context = context!!
-        FirebaseApp.initializeApp(_Context)
-        // [START initialize_database_ref]
-        database = Firebase.database.reference
-        // [END initialize_database_ref]
-
-        myTopLocations= database.child("localizacoes")
-
-
         var btn_login = root.findViewById(R.id.btn_login) as Button
         var btn_logout = root.findViewById(R.id.btn_logout) as Button
-        var positionSpinner = root.findViewById(R.id.positionSpinner) as Spinner
 
-        var myList = arrayListOf<Localizacoes>()
+        var txtData =root.findViewById(R.id.txt_Data) as TextView
+        var txtUser =root.findViewById(R.id.txt_Local) as TextView
 
-        loadList { list ->  list.toCollection(myList)    }
+        var isValidated = attendanceViewModel.getUserIsValidaded()
 
-        val adapter = ArrayAdapter(_Context, android.R.layout.simple_spinner_item,myList).also {
-            arrayAdapter ->  arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            positionSpinner.adapter = arrayAdapter
-        }
-
-        positionSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-
-            }
-
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                // either one will work as well
-                //parent.getItemAtPosition(position)
-                val item = adapter.getItem(position)//?.nome
-            }
+        if(!isValidated){
+            btn_login.isEnabled = false
+            btn_logout.isEnabled = false
+            txtData.text =  "O seu dispositivo ainda não se encontra credenciado para usar a aplicação queira porfavor registrar o seu número/dispositivo"
+        }else{
+            btn_login.isEnabled = true
+            btn_logout.isEnabled = true
+            txtData.text =  ""
         }
 
         canAuthenticate()
@@ -126,25 +110,23 @@ class AttendanceFragment : Fragment() {
 
         sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(activity)
 
-        var txtData =root.findViewById(R.id.txt_Data) as TextView
-        var txtUser =root.findViewById(R.id.txt_Local) as TextView
-
         btn_login.setOnClickListener {
 
             encryptPrompt(
                 data = DEFAULT_KEY_NAME.toByteArray(),
                 failedAction = { Log.e("e","encrypt failed") },
                 successAction = {
-                    textView.text = String(it)
-                    val currentDate: String = SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS", Locale.getDefault()).format(Date())
 
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        attendanceViewModel.writeAttendance(Date(), "Entrada", "Localização")
 
-                    txtData.text =  "Hora de Entrada - " + currentDate
-                    txtUser.text = "Bom trabalho - " +
-                    Log.d("App","encrypt success")
+                        textView.text = String(it)
+                        val currentDate: String = SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS", Locale.getDefault()).format(Date())
 
-
-
+                        txtData.text =  "Hora de Entrada - " + currentDate
+                        txtUser.text = "Bom trabalho - " +
+                                Log.d("App","encrypt success")
+                    }
                 }
             )
 //            // Exceptions are unhandled within this snippet.
@@ -158,34 +140,35 @@ class AttendanceFragment : Fragment() {
         }
 
         btn_logout.setOnClickListener{
-            decryptPrompt(
-                failedAction = { Log.e("App","decrypt failed") },
-                successAction = {
-                    textView.text = String(it)
-                    Log.d("App","decrypt success")
-                }
+            encryptPrompt(
+                    data = DEFAULT_KEY_NAME.toByteArray(),
+                    failedAction = { Log.e("e","encrypt failed") },
+                    successAction = {
+                        textView.text = String(it)
+                        val currentDate: String = SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS", Locale.getDefault()).format(Date())
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            attendanceViewModel.writeAttendance(Date(), "Saida", "Localização")
+
+                            txtData.text =  "Hora de Saida - " + currentDate
+                            txtUser.text = "Bom Descanso, até amanhã - " +
+                                    Log.d("App","encrypt success")
+                        }
+
+
+
+                    }
             )
+//            decryptPrompt(
+//                failedAction = { Log.e("App","decrypt failed") },
+//                successAction = {
+//                    textView.text = String(it)
+//                    Log.d("App","decrypt success")
+//                }
+//            )
         }
         return root
     }
-
-    fun loadList(callback: (list: List<Localizacoes>) -> Unit) {
-        myTopLocations.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onCancelled(snapshotError: DatabaseError) {
-                TODO("not implemented")
-            }
-
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val list : MutableList<Localizacoes> = mutableListOf()
-                val children = snapshot!!.children
-                children.forEach {
-                    it.getValue(Localizacoes::class.java)?.let { it1 -> list.add(it1) }
-                }
-                callback(list)
-            }
-        })
-    }
-
 
     private fun canAuthenticate(){
         val context: Context = context!!
@@ -404,6 +387,7 @@ class AttendanceFragment : Fragment() {
             .setNegativeButtonText("Deseja Cancelar?")
             .build()
     }
+
 
     companion object {
         private const val TAG = "BiometricPrompt"

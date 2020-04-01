@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="Gradle: androidx.test.ext:truth:1.2.0@aar">
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/bacb4c9595ddf3a6299a24670c1f1a2a/jetified-truth-1.2.0/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/bacb4c9595ddf3a6299a24670c1f1a2a/jetified-truth-1.2.0/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/e4acd7f679d0897f342b11eba6a4eaf3/jetified-truth-1.2.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/e4acd7f679d0897f342b11eba6a4eaf3/jetified-truth-1.2.0/res" />
     </CLASSES>
     <JAVADOC>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/androidx.test.ext/truth/1.2.0/3777d2c5b4178151349ab2e25b2d6a825deddb3c/truth-1.2.0-javadoc.jar!/" />

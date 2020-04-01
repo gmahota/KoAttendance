@@ -18,19 +18,25 @@ package com.example.koattendance
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.example.koattendance.repository.AuthRepository
 import com.google.android.gms.fido.fido2.Fido2ApiClient
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-
-
     private val repository = AuthRepository.getInstance(application)
+
+    private val _processing = MutableLiveData<Boolean>()
+    val processing: LiveData<Boolean>
+        get() = _processing
 
     val signInState = repository.getSignInState()
 
     fun setFido2ApiClient(client: Fido2ApiClient?) {
         repository.setFido2APiClient(client)
     }
+
+
 
 }

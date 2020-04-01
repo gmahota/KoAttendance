@@ -19,6 +19,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
+import androidx.room.Room
+
 import com.example.koattendance.repository.SignInState
 import com.example.koattendance.ui.auth.AuthFragment
 import com.example.koattendance.ui.home.HomeFragment
@@ -35,6 +37,7 @@ import com.google.firebase.database.ktx.getValue
 import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.auth_fragment.*
 import kotlinx.coroutines.channels.consumesAll
+import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
 
@@ -62,13 +65,22 @@ class MainActivity : AppCompatActivity() {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(setOf(
-                R.id.nav_home,R.id.nav_auth, R.id.nav_slideshow,R.id.nav_attendance), drawerLayout)
+                R.id.nav_home,R.id.nav_auth, R.id.nav_attendance), drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
         viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
 
-        basicReadWrite()
+        try{
+            FirebaseApp.initializeApp(applicationContext)
+        }catch (e: Exception){
+            Log.e("App",e.stackTrace.toString())
+        }
+
+//        val db = Room.databaseBuilder(
+//                applicationContext,
+//                AppDatabase::class.java, "koattendance"
+//        ).enableMultiInstanceInvalidation().build()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -82,55 +94,55 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        Log.e("APP","AQIO")
-        when (requestCode) {
-            REQUEST_FIDO2_REGISTER -> {
-                Log.e("APP","111111")
-                val errorExtra = data?.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA)
-                if (errorExtra != null) {
-                    val error = AuthenticatorErrorResponse.deserializeFromBytes(errorExtra)
-                    error.errorMessage?.let { errorMessage ->
-                        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
-                        Log.e( "ActivityResult",errorMessage)
-                    }
-                } else if (resultCode != RESULT_OK) {
-                    Toast.makeText(this, R.string.cancelled, Toast.LENGTH_SHORT).show()
-                } else {
-                    val fragment = supportFragmentManager.findFragmentById(R.id.container)
-                    if (data != null && fragment is HomeFragment) {
-                        //fragment.handleRegister(data)
-                    }
-                }
-            }
-
-
-            REQUEST_FIDO2_SIGNIN -> {
-                Log.e("APP","122222")
-                val errorExtra = data?.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA)
-                if (errorExtra != null) {
-                    val error = AuthenticatorErrorResponse.deserializeFromBytes(errorExtra)
-                    error.errorMessage?.let { errorMessage ->
-                        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
-                        Log.e("App_singing", errorMessage)
-                    }
-                } else if (resultCode != RESULT_OK) {
-                    Toast.makeText(this, R.string.cancelled, Toast.LENGTH_SHORT).show()
-                } else {
-                    val fragment = supportFragmentManager.findFragmentById(R.id.container)
-                    if (data != null && fragment is AuthFragment) {
-                        fragment.handleSignin(data)
-                    }
-                }
-            }
-            else -> super.onActivityResult(requestCode, resultCode, data)
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.setFido2ApiClient(Fido.getFido2ApiClient(this))
-    }
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        Log.e("APP","AQIO")
+//        when (requestCode) {
+//            REQUEST_FIDO2_REGISTER -> {
+//                Log.e("APP","111111")
+//                val errorExtra = data?.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA)
+//                if (errorExtra != null) {
+//                    val error = AuthenticatorErrorResponse.deserializeFromBytes(errorExtra)
+//                    error.errorMessage?.let { errorMessage ->
+//                        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+//                        Log.e( "ActivityResult",errorMessage)
+//                    }
+//                } else if (resultCode != RESULT_OK) {
+//                    Toast.makeText(this, R.string.cancelled, Toast.LENGTH_SHORT).show()
+//                } else {
+//                    val fragment = supportFragmentManager.findFragmentById(R.id.container)
+//                    if (data != null && fragment is HomeFragment) {
+//                        //fragment.handleRegister(data)
+//                    }
+//                }
+//            }
+//
+//
+//            REQUEST_FIDO2_SIGNIN -> {
+//                Log.e("APP","122222")
+//                val errorExtra = data?.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA)
+//                if (errorExtra != null) {
+//                    val error = AuthenticatorErrorResponse.deserializeFromBytes(errorExtra)
+//                    error.errorMessage?.let { errorMessage ->
+//                        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+//                        Log.e("App_singing", errorMessage)
+//                    }
+//                } else if (resultCode != RESULT_OK) {
+//                    Toast.makeText(this, R.string.cancelled, Toast.LENGTH_SHORT).show()
+//                } else {
+//                    val fragment = supportFragmentManager.findFragmentById(R.id.container)
+//                    if (data != null && fragment is AuthFragment) {
+//                        fragment.handleSignin(data)
+//                    }
+//                }
+//            }
+//            else -> super.onActivityResult(requestCode, resultCode, data)
+//        }
+//    }
+//
+//    override fun onResume() {
+//        super.onResume()
+//        viewModel.setFido2ApiClient(Fido.getFido2ApiClient(this))
+//    }
 
     override fun onPause() {
         super.onPause()
@@ -146,32 +158,4 @@ class MainActivity : AppCompatActivity() {
             transaction.commit()
         }
     }
-
-    fun basicReadWrite() {
-        // [START write_message]
-        // Write a message to the database
-        val database = Firebase.database
-        val myRef = database.getReference("message")
-
-        myRef.setValue("Hello, World!")
-        // [END write_message]
-
-        // [START read_message]
-        // Read from the database
-        myRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                // This method is called once with the initial value and again
-                // whenever data at this location is updated.
-                val value = dataSnapshot.getValue<String>()
-                Log.d(TAG, "Value is: $value")
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                // Failed to read value
-                Log.w(TAG, "Failed to read value.", error.toException())
-            }
-        })
-        // [END read_message]
-    }
-
 }

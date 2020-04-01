@@ -35,6 +35,7 @@ import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRpEntity
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialType
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialUserEntity
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -52,7 +53,7 @@ class AuthApi {
 
     companion object {
         private const val BASE_URL = BuildConfig.API_BASE_URL
-        private val JSON = MediaType.parse("application/json")
+        private val JSON = "application/json".toMediaTypeOrNull()
     }
 
     private val client = OkHttpClient.Builder()
@@ -122,7 +123,7 @@ class AuthApi {
         if (!response.isSuccessful) {
             throwResponseError(response, "Error calling /getKeys")
         }
-        val body = response.body() ?: throw ApiException("Empty response from /getKeys")
+        val body = response.body ?: throw ApiException("Empty response from /getKeys")
         return parseUserCredentials(body)
     }
 
@@ -150,7 +151,7 @@ class AuthApi {
         if (!response.isSuccessful) {
             throwResponseError(response, "Error calling /registerRequest")
         }
-        val body = response.body() ?: throw ApiException("Empty response from /registerRequest")
+        val body = response.body ?: throw ApiException("Empty response from /registerRequest")
         return parsePublicKeyCredentialCreationOptions(body)
     }
 
@@ -192,7 +193,7 @@ class AuthApi {
         if (!apiResponse.isSuccessful) {
             throwResponseError(apiResponse, "Error calling /registerResponse")
         }
-        val body = apiResponse.body() ?: throw ApiException("Empty response from /registerResponse")
+        val body = apiResponse.body ?: throw ApiException("Empty response from /registerResponse")
         return parseUserCredentials(body)
     }
 
@@ -244,7 +245,7 @@ class AuthApi {
         if (!response.isSuccessful) {
             throwResponseError(response, "Error calling /signinRequest")
         }
-        val body = response.body() ?: throw ApiException("Empty response from /signinRequest")
+        val body = response.body ?: throw ApiException("Empty response from /signinRequest")
         return parsePublicKeyCredentialRequestOptions(body)
     }
 
@@ -288,7 +289,7 @@ class AuthApi {
         if (!apiResponse.isSuccessful) {
             throwResponseError(apiResponse, "Error calling /signingResponse")
         }
-        val body = apiResponse.body() ?: throw ApiException("Empty response from /signinResponse")
+        val body = apiResponse.body ?: throw ApiException("Empty response from /signinResponse")
         val cookie = findSetCookieInResponse(apiResponse, "signed-in")
         return parseUserCredentials(body) to "$cookie; username=$username"
     }
@@ -512,7 +513,7 @@ class AuthApi {
     }
 
     private fun throwResponseError(response: Response, message: String): Nothing {
-        val b = response.body()
+        val b = response.body
         if (b != null) {
             throw ApiException("$message; ${parseError(b)}")
         } else {
