@@ -27,9 +27,9 @@ class HomeFragment : Fragment() {
         val isValidated = homeViewModel.getUserIsValidaded();
 
         if(isValidated){
-            textView.text = "Bem vindo ao sistema Ko-Attendance, faça a sua entrada ou saida"
+            textView.text = "Well come to Ko-Attendence App, make your time clock picker. \n \n Bem vindo ao sistema Ko-Attendance, faça a sua entrada ou saida"
         }else{
-            textView.text = "O seu dispositivo não se encontra registrado no sistema deverá clicar no canto superio esquerto -> Registro!"
+            textView.text = "Your device is not register goto menubar, Regiser and folloy up the instrutions. \n \n O seu dispositivo não se encontra registrado no sistema deverá clicar no canto superio esquerto -> Registro!"
         }
         return root
     }

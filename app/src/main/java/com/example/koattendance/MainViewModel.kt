@@ -17,11 +17,16 @@
 package com.example.koattendance
 
 import android.app.Application
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.koattendance.data.Attendance
 import com.example.koattendance.repository.AuthRepository
 import com.google.android.gms.fido.fido2.Fido2ApiClient
+import java.time.LocalDateTime
+import java.util.*
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -31,12 +36,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val processing: LiveData<Boolean>
         get() = _processing
 
+    val _lat = MutableLiveData<Double>().apply {
+        value = 0.0
+    }
+    val lat: LiveData<Double> = _lat
+
+    val _long = MutableLiveData<Double>().apply {
+        value = 0.0
+    }
+    val long: LiveData<Double> = _long
+
     val signInState = repository.getSignInState()
 
     fun setFido2ApiClient(client: Fido2ApiClient?) {
         repository.setFido2APiClient(client)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun setAttendance(){
+        var user = repository.get_User(_processing)
+        var la =  _lat.value!!
+        var lo =  _long.value!!
 
+        var attendance =  Attendance(0,user.user,user.phoneNumber, LocalDateTime.now(),"",user.location, la, lo)
 
+        repository.set_Location(attendance,_processing)
+    }
 }

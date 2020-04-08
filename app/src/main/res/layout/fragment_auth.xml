@@ -84,7 +84,7 @@
                 android:imeOptions="actionGo"
                 android:inputType="text"
                 android:maxLines="1"
-                android:enabled="false"/>
+                android:enabled="true"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button

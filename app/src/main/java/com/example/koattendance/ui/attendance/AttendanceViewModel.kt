@@ -7,7 +7,6 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.example.koattendance.data.Attendance
 import com.example.koattendance.repository.AuthRepository
 import com.google.firebase.database.DatabaseReference
@@ -16,8 +15,8 @@ import com.google.firebase.ktx.Firebase
 import java.time.Instant
 import java.util.*
 import kotlin.collections.HashMap
+import java.time.LocalDateTime
 
-@RequiresApi(Build.VERSION_CODES.O)
 class AttendanceViewModel (application: Application) : AndroidViewModel(application) {
 
     private var database = Firebase?.database?.reference
@@ -46,11 +45,21 @@ class AttendanceViewModel (application: Application) : AndroidViewModel(applicat
     }
 
     fun  getUserIsValidaded() : Boolean{
-        return repository.user_isValidated(_processing);
+        var isValidate = repository.user_isValidated(_processing)
+        if(isValidate){
+            var user = repository.get_User(_processing);
+
+            _text.value ="Time Clock Picker From - " + user.branch
+        }else{
+            _text.value =  "O seu dispositivo ainda não se encontra credenciado para usar a aplicação queira porfavor registrar o seu número/dispositivo"
+        }
+
+        return isValidate;
     }
 
 
-    fun writeAttendance(date: Date, type: String, location: String) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun writeAttendance(type: String) {
         // Create new post at /user-posts/$userid/$postid and at
         // /posts/$postid simultaneously
         val key = database.child("Attendance").push().key
@@ -60,7 +69,10 @@ class AttendanceViewModel (application: Application) : AndroidViewModel(applicat
         }
         val user = repository.get_User(_processing)
 
-        val attendance = Attendance(-1,user.user,user.phoneNumber, date,type,location)
+        val attendance = repository.get_Location(_processing)
+        attendance.type = type
+        attendance.dateTime =LocalDateTime.now()
+
         val attendanceValues = attendance.toMap()
 
         val childUpdates = HashMap<String, Any>()

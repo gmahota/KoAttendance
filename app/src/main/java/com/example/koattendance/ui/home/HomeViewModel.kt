@@ -1,15 +1,23 @@
 package com.example.koattendance.ui.home
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.koattendance.data.Employee
 import com.example.koattendance.repository.AuthRepository
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = AuthRepository.getInstance(application)
+
+    private val myList: MutableList<Employee> = mutableListOf()
 
     private val _processing = MutableLiveData<Boolean>()
     val processing: LiveData<Boolean>

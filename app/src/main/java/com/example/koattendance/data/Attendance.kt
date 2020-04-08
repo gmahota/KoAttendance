@@ -1,5 +1,5 @@
 package com.example.koattendance.data
-
+import java.time.LocalDateTime
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.google.firebase.database.Exclude
@@ -10,24 +10,27 @@ import java.util.*
 @RequiresApi(Build.VERSION_CODES.O)
 @IgnoreExtraProperties
 data class Attendance(
-        var id: Int,
+        @Exclude  var id: Int,
         var user: String?,
         var phoneNumber:String?,
-        var dateTime: Date?,
+        var dateTime: LocalDateTime,
         var type: String?,
-        var location:String?
+        var location:String?,
+        var latitude: Double,
+        var longitude:Double
 ) {
-    constructor() :this(-1,"","",Date.from(Instant.now()),"","")
+    constructor() :this(-1,"","",LocalDateTime.now(),"","",0.0,0.0)
 
     @Exclude
     fun toMap(): Map<String, Any?> {
         return mapOf(
-                "id" to id,
-                "funcionario" to user,
-                "telefone" to phoneNumber,
-                "tipo" to type,
+                "employee" to user,
+                "phoneNumber" to phoneNumber,
+                "type" to type,
                 "date" to dateTime,
-                "Localizacao" to location
+                "location" to location,
+                "latitude" to latitude,
+                "longitude" to longitude
         )
     }
 }

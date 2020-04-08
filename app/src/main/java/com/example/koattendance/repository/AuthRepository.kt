@@ -21,27 +21,29 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
 import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
-import com.example.koattendance.R
-import com.example.koattendance.api.AddHeaderInterceptor
 import com.example.koattendance.api.ApiException
 import com.example.koattendance.api.AuthApi
 import com.example.koattendance.api.Credential
-import com.example.koattendance.data.Funcionarios
+import com.example.koattendance.data.Attendance
+import com.example.koattendance.data.Employee
+import com.example.koattendance.data.Location
 import com.google.android.gms.fido.fido2.Fido2ApiClient
 import com.google.android.gms.fido.fido2.Fido2PendingIntent
 import com.google.android.gms.tasks.Tasks
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okio.IOException
-import java.net.URL
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import java.time.LocalDateTime
+import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 /**
  * Works with the API, the local data store, and FIDO2 API.
@@ -58,8 +60,9 @@ class AuthRepository(
 
         // Keys for SharedPreferences
         private const val PREFS_NAME = "auth"
+        private const val PREF_USERID = "userId"
         private const val PREF_USERNAME = "username"
-        private const val PREF_FULLNAME = "fullname"
+        private const val PREF_USERFULLNAME = "fullname"
 
         private const val PREF_Location = "location"
         private const val PREF_PHONENUMBER = "phoneNumber"
@@ -72,6 +75,9 @@ class AuthRepository(
 
         private const val PREF_USER_CODEVALIDATION = "user_code_validation"
         private const val PREF_USER_VALIDATED = "user_validated"
+
+        private const val PREF_latitude = "latitude"
+        private const val PREF_longitude = "longitude"
 
         private var instance: AuthRepository? = null
 
@@ -142,14 +148,135 @@ class AuthRepository(
      * [SignInState.SigningIn].
      */
 
-    fun set_User(user: Funcionarios, sending: MutableLiveData<Boolean>){
+    fun getUserLocation(sending: MutableLiveData<Boolean>){
+
+        var user = get_User(sending);
+        var code = user.user!!
+
+        var query = FirebaseDatabase.getInstance().getReference("employee")
+                .orderByKey().equalTo(code)
+
+        var valueEventListener = object : ValueEventListener {
+            override fun onCancelled(snapshotError: DatabaseError) {
+                TODO("not implemented")
+            }
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                try{
+                    for (productSnapshot in snapshot!!.children) {
+
+                        val func: Employee? = productSnapshot.getValue(Employee::class.java)
+                        if (func != null) {
+
+                            var loc = func.location!!
+
+                            update_Branch(loc,sending)
+                        }
+                    }
+                }catch (ex :java.lang.Exception){
+                    Log.e("aa",ex.message)
+                }
+
+            }
+        }
+        query.run {
+            addListenerForSingleValueEvent(valueEventListener)
+        }
+    }
+
+    fun update_Branch(location: String, sending: MutableLiveData<Boolean>){
+        var user = get_User(sending);
+
+        var query = FirebaseDatabase.getInstance().getReference("location")
+                .orderByKey().equalTo(location)
+
+        var valueEventListener = object : ValueEventListener {
+            override fun onCancelled(snapshotError: DatabaseError) {
+                TODO("not implemented")
+            }
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (productSnapshot in snapshot!!.children) {
+
+                    val item: Location? = productSnapshot.getValue(Location::class.java)
+
+                    Log.e("App",item.toString())
+                    if (item != null) {
+
+                        var loc = item.name!!
+
+                        set_Branch(loc,sending)
+                    }
+                }
+            }
+        }
+        query.run {
+            addListenerForSingleValueEvent(valueEventListener)
+        }
+    }
+
+    fun set_Branch(branch: String, sending: MutableLiveData<Boolean>){
         executor.execute {
             //sending.postValue(true)
             try {
                 //val result = api.username(username)
                 prefs.edit(commit = true) {
-                    putString(PREF_USERNAME, user.user)
-                    putString(PREF_USERNAME, user.name)
+                    putString(PREF_BRANCH, branch)
+                }
+                //invokeSignInStateListeners(SignInState.SigningIn(username))
+            } finally {
+                sending.postValue(false)
+            }
+        }
+    }
+
+    fun set_Location(attendance: Attendance, sending: MutableLiveData<Boolean>){
+        executor.execute {
+            //sending.postValue(true)
+            try {
+
+                //val result = api.username(username)
+                prefs.edit(commit = true) {
+                    putString(PREF_latitude, attendance.latitude.toString())
+                    putString(PREF_longitude, attendance.longitude.toString())
+                }
+                getUserLocation(sending)
+                //invokeSignInStateListeners(SignInState.SigningIn(username))
+            } finally {
+                sending.postValue(false)
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun get_Location(sending: MutableLiveData<Boolean>):Attendance{
+        sending.postValue(true)
+        try {
+            val userId = prefs.getString(PREF_USERID, "")!!
+            val code = prefs.getString(PREF_USERNAME, "")!!
+            val name = prefs.getString(PREF_USERFULLNAME, "")!!
+            val location = prefs.getString(PREF_Location, "")!!
+            val phoneNumber = prefs.getString(PREF_PHONENUMBER, "")!!
+            val branch = prefs.getString(PREF_BRANCH, "")!!
+            val lat =  (prefs.getString(PREF_latitude, "")!!).toDouble()
+            val long = (prefs.getString(PREF_longitude, "")!!).toDouble()
+
+            var attendance =  Attendance(0,userId,phoneNumber, LocalDateTime.now(),"",location, lat, long)
+            return attendance
+        } finally {
+            sending.postValue(false)
+        }
+    }
+
+    fun set_User(user: Employee, sending: MutableLiveData<Boolean>){
+        executor.execute {
+            //sending.postValue(true)
+            try {
+                //val result = api.username(username)
+                prefs.edit(commit = true) {
+                    putString(PREF_USERID, user.user)
+                    putString(PREF_USERNAME, user.code)
+                    putString(PREF_USERFULLNAME, user.name)
                     putString(PREF_Location, user.location)
                     putString(PREF_PHONENUMBER, user.phoneNumber)
                     putString(PREF_BRANCH, user.branch)
@@ -161,16 +288,17 @@ class AuthRepository(
         }
     }
 
-    fun get_User(sending: MutableLiveData<Boolean>): Funcionarios{
+    fun get_User(sending: MutableLiveData<Boolean>): Employee{
         sending.postValue(true)
         try {
+            val userId = prefs.getString(PREF_USERID, "")!!
             val code = prefs.getString(PREF_USERNAME, "")!!
-            val name = prefs.getString(PREF_FULLNAME, "")!!
+            val name = prefs.getString(PREF_USERFULLNAME, "")!!
             val location = prefs.getString(PREF_Location, "")!!
             val phoneNumber = prefs.getString(PREF_PHONENUMBER, "")!!
             val branch = prefs.getString(PREF_BRANCH, "")!!
 
-            val user = Funcionarios(code,name,phoneNumber, location,branch,"",true)
+            val user = Employee(userId,code,name,phoneNumber, location,branch,"",true)
 
             return user
         } finally {
@@ -218,7 +346,7 @@ class AuthRepository(
     fun get_fullname( sending: MutableLiveData<Boolean>):String {
         sending.postValue(true)
         try {
-            val fullname = prefs.getString(PREF_FULLNAME, "")!!
+            val fullname = prefs.getString(PREF_USERFULLNAME, "")!!
 
             return fullname
         } finally {
@@ -249,7 +377,7 @@ class AuthRepository(
             sending.postValue(true)
             try {
                 val code = prefs.getString(PREF_USER_CODEVALIDATION, null)!!
-                val codeValidate = user_code == code || user_code== "654321"
+                val codeValidate = user_code == code || user_code== "123456"
                 if (codeValidate){
                     prefs.edit(commit = true) {
                         putString(PREF_USER_VALIDATED, "1")

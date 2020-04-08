@@ -7,14 +7,14 @@
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Inicio" />
+            android:title="Home" />
         <item
             android:id="@+id/nav_auth"
             android:icon="@drawable/ic_menu_auth"
-            android:title="Registro"/>
+            android:title="Register"/>
         <item
             android:id="@+id/nav_attendance"
             android:icon="@drawable/ic_menu_attendance"
-            android:title="Entrada"/>
+            android:title="Clock Picker Time"/>
     </group>
 </menu>

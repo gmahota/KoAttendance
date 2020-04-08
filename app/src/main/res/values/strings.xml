@@ -78,5 +78,7 @@
     <string name="validationAlert">Dirija-se à sua caixa de mensagens e copie o código de validação apresentado</string>
     <string name="usendit_user">mahotag</string>
     <string name="usendit_password">AgnesZoe1518!</string>
+    <string name="saida_clock_out">Saida/Clock-Out</string>
+    <string name="entrada_clock_in">Entrada/Clock-In</string>
 
 </resources>

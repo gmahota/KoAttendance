@@ -1,5 +1,8 @@
 package com.example.koattendance.ui.attendance
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
 import android.os.Build
@@ -17,7 +20,6 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.example.koattendance.KEY_NAME
 import com.example.koattendance.R
 import java.security.Key
 import java.security.KeyStore
@@ -26,34 +28,25 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
-
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.location.Location
-
+import android.location.LocationManager
 import android.util.Base64
 import android.widget.*
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.getSystemService
 
 import androidx.core.content.edit
-import com.example.android.fido2.ui.observeOnce
+import androidx.core.location.LocationManagerCompat.isLocationEnabled
 import com.example.koattendance.DEFAULT_KEY_NAME
-import com.example.koattendance.MainActivity
-import com.example.koattendance.data.Localizacoes
-import com.example.koattendance.ui.auth_new.AuthFragment
-import com.google.firebase.FirebaseApp
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 import java.util.concurrent.Executors
-import kotlin.collections.ArrayList
-
 
 @RequiresApi(Build.VERSION_CODES.M)
 class AttendanceFragment : Fragment() {
@@ -72,7 +65,6 @@ class AttendanceFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
     private val keyStore: KeyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreateView(
             inflater: LayoutInflater,
             container: ViewGroup?,
@@ -81,15 +73,16 @@ class AttendanceFragment : Fragment() {
         attendanceViewModel =
                 ViewModelProviders.of(this).get(AttendanceViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_attendance, container, false)
-        val textView: TextView = root.findViewById(R.id.text_gallery)
+
+        var txtData =root.findViewById(R.id.txt_Data) as TextView
         attendanceViewModel.text.observe(viewLifecycleOwner, Observer {
-            textView.text = it
+            txtData.text = it
         })
 
         var btn_login = root.findViewById(R.id.btn_login) as Button
         var btn_logout = root.findViewById(R.id.btn_logout) as Button
 
-        var txtData =root.findViewById(R.id.txt_Data) as TextView
+
         var txtUser =root.findViewById(R.id.txt_Local) as TextView
 
         var isValidated = attendanceViewModel.getUserIsValidaded()
@@ -97,16 +90,14 @@ class AttendanceFragment : Fragment() {
         if(!isValidated){
             btn_login.isEnabled = false
             btn_logout.isEnabled = false
-            txtData.text =  "O seu dispositivo ainda não se encontra credenciado para usar a aplicação queira porfavor registrar o seu número/dispositivo"
+
         }else{
             btn_login.isEnabled = true
             btn_logout.isEnabled = true
-            txtData.text =  ""
+
         }
 
         canAuthenticate()
-        //generateSecretKey_bio()
-        //initBiometric()
 
         sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(activity)
 
@@ -118,25 +109,14 @@ class AttendanceFragment : Fragment() {
                 successAction = {
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        attendanceViewModel.writeAttendance(Date(), "Entrada", "Localização")
+                        attendanceViewModel.writeAttendance("Clock-In")
 
-                        textView.text = String(it)
-                        val currentDate: String = SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS", Locale.getDefault()).format(Date())
-
-                        txtData.text =  "Hora de Entrada - " + currentDate
+                        txtData.text =  "Hora de Entrada - " + LocalDateTime.now()
                         txtUser.text = "Bom trabalho - " +
                                 Log.d("App","encrypt success")
                     }
                 }
             )
-//            // Exceptions are unhandled within this snippet.
-//            val cipher = getCipher()
-//
-//            val secretKey = getSecretKey()
-//
-//            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-//
-//            biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
         }
 
         btn_logout.setOnClickListener{
@@ -144,28 +124,16 @@ class AttendanceFragment : Fragment() {
                     data = DEFAULT_KEY_NAME.toByteArray(),
                     failedAction = { Log.e("e","encrypt failed") },
                     successAction = {
-                        textView.text = String(it)
-                        val currentDate: String = SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS", Locale.getDefault()).format(Date())
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            attendanceViewModel.writeAttendance(Date(), "Saida", "Localização")
+                            attendanceViewModel.writeAttendance( "Clock-Out")
 
-                            txtData.text =  "Hora de Saida - " + currentDate
+                            txtData.text =  "Hora de Saida - " + LocalDateTime.now()
                             txtUser.text = "Bom Descanso, até amanhã - " +
                                     Log.d("App","encrypt success")
                         }
-
-
-
                     }
             )
-//            decryptPrompt(
-//                failedAction = { Log.e("App","decrypt failed") },
-//                successAction = {
-//                    textView.text = String(it)
-//                    Log.d("App","decrypt success")
-//                }
-//            )
         }
         return root
     }
@@ -206,15 +174,6 @@ class AttendanceFragment : Fragment() {
                     result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
 
-
-
-
-//                    val encryptedInfo: ByteArray? = result.cryptoObject?.cipher?.doFinal(
-//                        KEY_NAME.toByteArray(Charset.defaultCharset())
-//                    )
-//                    Log.d("MY_APP_TAG", "Encrypted information: " +
-//                            Arrays.toString(encryptedInfo))
-
                     Toast.makeText(context,
                             "Authentication succeeded!",  Toast.LENGTH_SHORT)
                         .show()
@@ -234,15 +193,6 @@ class AttendanceFragment : Fragment() {
             .setSubtitle("Log in using your biometric credential")
             .setNegativeButtonText("Use account password")
             .build()
-
-        // Prompt appears when user clicks "Log in".
-        // Consider integrating with the keystore to unlock cryptographic operations,
-        // if needed by your app.
-
-        //val biometricLoginButton = findViewById<Button>(R.id.biometric_login)
-        //biometricLoginButton.setOnClickListener {
-        //    biometricPrompt.authenticate(promptInfo)
-
     }
 
     fun decryptPrompt(failedAction: () -> Unit, successAction: (ByteArray) -> Unit) {
@@ -388,7 +338,6 @@ class AttendanceFragment : Fragment() {
             .build()
     }
 
-
     companion object {
         private const val TAG = "BiometricPrompt"
         private const val KEYSTORE = "AndroidKeyStore"
@@ -400,84 +349,4 @@ class AttendanceFragment : Fragment() {
         private const val PADDING = KeyProperties.ENCRYPTION_PADDING_PKCS7
         private fun keyTransformation() = listOf(ALGORITHM, BLOCK_MODE, PADDING).joinToString(separator = "/")
     }
-
-//    fun decryptData(ciphertext: ByteArray, cipher: Cipher): String {
-//        val plaintext = cipher.doFinal(ciphertext)
-//        return String(plaintext, Charset.forName("UTF-8"))
-//    }
-//
-//    @RequiresApi(Build.VERSION_CODES.M)
-//    private fun generateSecretKey(keyGenParameterSpec: KeyGenParameterSpec) {
-//        val keyGenerator = KeyGenerator.getInstance(
-//            KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-//        keyGenerator.init(keyGenParameterSpec)
-//        keyGenerator.generateKey()
-//    }
-//
-//    @RequiresApi(Build.VERSION_CODES.M)
-//    private fun generateSecretKey_bio() {
-//
-//
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//            generateSecretKey( KeyGenParameterSpec.Builder(
-//                    KEY_NAME,
-//                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-//                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-//                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-//                .setUserAuthenticationRequired(true)
-//                // Invalidate the keys if the user has registered a new biometric
-//                // credential, such as a new fingerprint. Can call this method only
-//                // on Android 7.0 (API level 24) or higher. The variable
-//                // "invalidatedByBiometricEnrollment" is true by default.
-//                .setInvalidatedByBiometricEnrollment(true)
-//                .build())
-//        }else{
-//            Log.d("MY_APP_TAG", "Key is invalid.")
-//        }
-//
-//
-//    }
-//
-//    private fun getSecretKey():SecretKey{
-//        val keyStore = KeyStore.getInstance("AndroidKeyStore")
-//
-//        // Before the keystore can be accessed, it must be loaded.
-//        keyStore.load(null)
-//
-//        val aliases: Enumeration<String> = keyStore.aliases()
-//        Log.d("MY_APP_TAG", aliases.toString())
-//
-//        return keyStore?.getKey(KEY_NAME, null) as SecretKey
-//    }
-//
-//    private fun getCipher(): Cipher {
-//        return Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
-//                + KeyProperties.BLOCK_MODE_CBC + "/"
-//                + KeyProperties.ENCRYPTION_PADDING_PKCS7)
-//    }
-//
-//    @RequiresApi(Build.VERSION_CODES.M)
-//    private fun encryptSecretInformation() {
-//        // Exceptions are unhandled for getCipher() and getSecretKey().
-//
-//            val cipher = getCipher()
-//            val secretKey = getSecretKey()
-//            try {
-//                cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-//                val encryptedInfo: ByteArray = cipher.doFinal(
-//                    String().toByteArray(Charset.defaultCharset())
-//                )
-//                Log.d(
-//                    "MY_APP_TAG", "Encrypted information: " +
-//                            encryptedInfo.contentToString()
-//                )
-//            } catch (e: InvalidKeyException) {
-//                Log.e("MY_APP_TAG", "Key is invalid.")
-//            }
-////            catch (e: UserNotAuthenticatedException) {
-////                Log.d("MY_APP_TAG", "The key's validity timed out.")
-////                biometricPrompt.authenticate(promptInfo)
-////            }
-//
-//    }
 }
