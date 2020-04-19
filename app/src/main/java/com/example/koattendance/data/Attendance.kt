@@ -13,13 +13,13 @@ data class Attendance(
         @Exclude  var id: Int,
         var user: String?,
         var phoneNumber:String?,
-        var dateTime: LocalDateTime,
+        var dateTime: String?,
         var type: String?,
         var location:String?,
         var latitude: Double,
         var longitude:Double
 ) {
-    constructor() :this(-1,"","",LocalDateTime.now(),"","",0.0,0.0)
+    constructor() :this(-1,"","","","","",0.0,0.0)
 
     @Exclude
     fun toMap(): Map<String, Any?> {

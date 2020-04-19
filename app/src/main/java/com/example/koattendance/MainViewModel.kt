@@ -26,6 +26,9 @@ import com.example.koattendance.data.Attendance
 import com.example.koattendance.repository.AuthRepository
 import com.google.android.gms.fido.fido2.Fido2ApiClient
 import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -58,7 +61,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         var la =  _lat.value!!
         var lo =  _long.value!!
 
-        var attendance =  Attendance(0,user.user,user.phoneNumber, LocalDateTime.now(),"",user.location, la, lo)
+        var attendance =  Attendance(0,user.user,user.phoneNumber, ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT ),"",user.location, la, lo)
 
         repository.set_Location(attendance,_processing)
     }

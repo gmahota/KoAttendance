@@ -40,8 +40,9 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import java.time.LocalDateTime
-import java.util.*
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
@@ -260,9 +261,8 @@ class AuthRepository(
             val branch = prefs.getString(PREF_BRANCH, "")!!
             val lat =  (prefs.getString(PREF_latitude, "")!!).toDouble()
             val long = (prefs.getString(PREF_longitude, "")!!).toDouble()
-
-            var attendance =  Attendance(0,userId,phoneNumber, LocalDateTime.now(),"",location, lat, long)
-            return attendance
+            val date = ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT )
+            return Attendance(0,userId,phoneNumber,date ,"",location, lat, long)
         } finally {
             sending.postValue(false)
         }

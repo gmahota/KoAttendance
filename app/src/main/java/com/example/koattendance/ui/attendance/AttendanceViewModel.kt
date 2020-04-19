@@ -16,6 +16,9 @@ import java.time.Instant
 import java.util.*
 import kotlin.collections.HashMap
 import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 class AttendanceViewModel (application: Application) : AndroidViewModel(application) {
 
@@ -71,7 +74,7 @@ class AttendanceViewModel (application: Application) : AndroidViewModel(applicat
 
         val attendance = repository.get_Location(_processing)
         attendance.type = type
-        attendance.dateTime =LocalDateTime.now()
+        attendance.dateTime = ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT )
 
         val attendanceValues = attendance.toMap()
 
