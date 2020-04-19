@@ -156,6 +156,7 @@ class AuthRepository(
 
         var query = FirebaseDatabase.getInstance().getReference("employee")
                 .orderByKey().equalTo(code)
+        query.keepSynced(true)
 
         var valueEventListener = object : ValueEventListener {
             override fun onCancelled(snapshotError: DatabaseError) {
@@ -190,6 +191,7 @@ class AuthRepository(
 
         var query = FirebaseDatabase.getInstance().getReference("location")
                 .orderByKey().equalTo(location)
+        query.keepSynced(true)
 
         var valueEventListener = object : ValueEventListener {
             override fun onCancelled(snapshotError: DatabaseError) {
