@@ -1,10 +1,6 @@
 package com.example.koattendance.ui.attendance
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
-import android.content.IntentSender
 import android.os.Build
 import android.os.Bundle
 import android.security.keystore.KeyGenParameterSpec
@@ -29,22 +25,13 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationManager
 import android.util.Base64
 import android.widget.*
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat.getSystemService
 
 import androidx.core.content.edit
-import androidx.core.location.LocationManagerCompat.isLocationEnabled
 import com.example.koattendance.DEFAULT_KEY_NAME
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.firebase.database.DatabaseReference
-import java.text.SimpleDateFormat
 import java.time.LocalDateTime
-import java.util.*
 
 import java.util.concurrent.Executors
 
@@ -79,11 +66,13 @@ class AttendanceFragment : Fragment() {
             txtData.text = it
         })
 
+        var txtMsg =root.findViewById(R.id.txt_Local) as TextView
+        attendanceViewModel.text_msg.observe(viewLifecycleOwner, Observer {
+            txtMsg.text = it
+        })
+
         var btn_login = root.findViewById(R.id.btn_login) as Button
         var btn_logout = root.findViewById(R.id.btn_logout) as Button
-
-
-        var txtUser =root.findViewById(R.id.txt_Local) as TextView
 
         var isValidated = attendanceViewModel.getUserIsValidaded()
 
@@ -94,7 +83,6 @@ class AttendanceFragment : Fragment() {
         }else{
             btn_login.isEnabled = true
             btn_logout.isEnabled = true
-
         }
 
         canAuthenticate()
@@ -107,13 +95,8 @@ class AttendanceFragment : Fragment() {
                 data = DEFAULT_KEY_NAME.toByteArray(),
                 failedAction = { Log.e("e","encrypt failed") },
                 successAction = {
-
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         attendanceViewModel.writeAttendance("Clock-In")
-
-                        txtData.text =  "Hora de Entrada - " + LocalDateTime.now()
-                        txtUser.text = "Bom trabalho - " +
-                                Log.d("App","encrypt success")
                     }
                 }
             )
@@ -127,10 +110,6 @@ class AttendanceFragment : Fragment() {
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             attendanceViewModel.writeAttendance( "Clock-Out")
-
-                            txtData.text =  "Hora de Saida - " + LocalDateTime.now()
-                            txtUser.text = "Bom Descanso, até amanhã - " +
-                                    Log.d("App","encrypt success")
                         }
                     }
             )

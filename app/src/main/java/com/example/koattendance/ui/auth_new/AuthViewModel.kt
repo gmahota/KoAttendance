@@ -265,72 +265,59 @@ class AuthViewModel(application: Application) : AndroidViewModel(application){
     }
 
     fun getUserFromPhoneNumber(phoneNumber: String){
-        _explanation3.value = "Aguarde a validação no servidor do número acima"
-        _processing.value = true
+        try
+        {
+            _explanation3.value = "Aguarde a validação no servidor do número acima"
+            _processing.value = true
 
-        var query = FirebaseDatabase.getInstance().getReference("employee")
-                .orderByChild("phoneNumber")
-                .equalTo(phoneNumber)
+            var query = FirebaseDatabase.getInstance().getReference("employee")
+                    .orderByChild("phoneNumber")
+                    .equalTo(phoneNumber)
 
-        var valueEventListener = object : ValueEventListener {
-            override fun onCancelled(snapshotError: DatabaseError) {
-                TODO("not implemented")
-            }
+            var valueEventListener = object : ValueEventListener {
+                override fun onCancelled(snapshotError: DatabaseError) {
+                    TODO("not implemented")
+                }
 
-            override fun onDataChange(snapshot: DataSnapshot) {
+                override fun onDataChange(snapshot: DataSnapshot) {
 
-                myList.clear()
-                for (productSnapshot in snapshot!!.children) {
+                    myList.clear()
+                    for (productSnapshot in snapshot!!.children) {
 
-                    val func: Employee? = productSnapshot.getValue(Employee::class.java)
-                    if (func != null) {
-                        func.user = productSnapshot.key
-                        func.phoneNumber = phoneNumber
+                        val func: Employee? = productSnapshot.getValue(Employee::class.java)
+                        if (func != null) {
+                            func.user = productSnapshot.key
+                            func.phoneNumber = phoneNumber
 
-                        Log.e("AAA",func.toString())
-
-                        myList.add(func)
+                            myList.add(func)
+                        }
                     }
+
+                    if(myList.count() > 0){
+                        val user = myList[0]
+
+                        repository.set_User(user,_processing)
+
+                        PhoneVerify(phoneNumber)
+
+                        _explanation3.value = "Hi ${user.name}, we send a SMS to you phone to validate your number, insert the code on field - validation code"
+                    }
+                    else{
+                        _explanation3.value = "Please check if your cellphone is connect to the internet and click again on Validate /n!" +
+                                "O número introduzido não existe na base de dados Porfavor, verifique se colocou devidamente os dados o seu telefone e volte a tentar novamente!"
+
+                    }
+                    _processing.value = true
+                    //snapshot!!.children.mapNotNullTo(myList) { it.getValue<Funcionarios>(Funcionarios::class.java) }
                 }
-
-                if(myList.count() > 0){
-                    val user = myList[0]
-
-                    repository.set_User(user,_processing)
-
-                    PhoneVerify(phoneNumber)
-
-
-                    _explanation3.value = "Hi ${user.name}, we send a SMS to you phone to validate your number, insert the code on field - validation code"
-                }
-                else{
-                    _explanation3.value = "Please check if your cellphone is connect to the internet and click again on Validate /n!" +
-                            "O número introduzido não existe na base de dados Porfavor, verifique se colocou devidamente os dados o seu telefone e volte a tentar novamente!"
-
-                }
-                _processing.value = true
-                //snapshot!!.children.mapNotNullTo(myList) { it.getValue<Funcionarios>(Funcionarios::class.java) }
             }
+            query.run {
+                addListenerForSingleValueEvent(valueEventListener)
+            }
+        }catch(ee: Exception)
+        {
+            Log.e("App", ee.message)
         }
-        query.run {
-            addListenerForSingleValueEvent(valueEventListener)
-        }
-
-        //Log.e("ap",myList.toString())
-
-//        return if(myList.count() > 0){
-//            val user = myList[0]
-//
-//            repository.set_User(user,_processing)
-//            _explanation3.value = "Hi ${user.name}, please validate on your cellphone the validation code"
-//            true
-//        }
-//        else{
-//            _explanation3.value = "Please check if your cellphone is connect to the internet and click again on Validate /n!" +
-//                            "O número introduzido não existe na base de dados Porfavor, verifique se colocou devidamente os dados o seu telefone e volte a tentar novamente!"
-//            false
-//        }
-
     }
 
     private fun getListUserFromPhone() {

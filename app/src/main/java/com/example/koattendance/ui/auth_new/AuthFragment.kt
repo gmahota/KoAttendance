@@ -49,10 +49,10 @@ class AuthFragment: Fragment() {
             val processingDial = root.findViewById(R.id.processing) as ContentLoadingProgressBar
             if (processing) {
                 processingDial.show()
-                //Handler().postDelayed({ startActivity( Intent(context, AuthFragment::class.java)) }, 4000L)
+
             } else {
                 processingDial.hide()
-                //Handler().postDelayed({ startActivity( Intent(context, AuthFragment::class.java)) }, 4000L)
+
             }
         })
 

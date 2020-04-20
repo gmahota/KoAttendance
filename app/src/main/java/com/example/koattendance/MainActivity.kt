@@ -29,28 +29,10 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
-import androidx.room.Room
-
-import com.example.koattendance.repository.SignInState
-import com.example.koattendance.ui.auth.AuthFragment
-import com.example.koattendance.ui.home.HomeFragment
-
-import com.example.koattendance.ui.username.UsernameFragment
-import com.google.android.gms.fido.Fido
-import com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse
 import com.google.android.gms.location.*
 import com.google.firebase.FirebaseApp
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.database
-import com.google.firebase.database.ktx.getValue
-import com.google.firebase.ktx.Firebase
-import kotlinx.android.synthetic.main.auth_fragment.*
-import kotlinx.coroutines.channels.consumesAll
+
 import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {

@@ -65,7 +65,9 @@ class AuthRepository(
         private const val PREF_USERNAME = "username"
         private const val PREF_USERFULLNAME = "fullname"
 
-        private const val PREF_Location = "location"
+        private const val PREF_Location_Id = "locationId"
+        private const val PREF_Location_Name = "locationName"
+
         private const val PREF_PHONENUMBER = "phoneNumber"
         private const val PREF_BRANCH = "branch"
 
@@ -186,11 +188,12 @@ class AuthRepository(
         }
     }
 
-    fun update_Branch(location: String, sending: MutableLiveData<Boolean>){
-        var user = get_User(sending);
+    fun set_UserLocation(location: String?, sending: MutableLiveData<Boolean>){
+
 
         var query = FirebaseDatabase.getInstance().getReference("location")
                 .orderByKey().equalTo(location)
+
         query.keepSynced(true)
 
         var valueEventListener = object : ValueEventListener {
@@ -202,13 +205,46 @@ class AuthRepository(
                 for (productSnapshot in snapshot!!.children) {
 
                     val item: Location? = productSnapshot.getValue(Location::class.java)
-
-                    Log.e("App",item.toString())
+                    val key = snapshot!!.key
                     if (item != null) {
+                        //val result = api.username(username)
+                        prefs.edit(commit = true) {
+                            putString(PREF_BRANCH, item.name)
+                            putString(PREF_Location_Name, item.name)
+                        }
+                    }
+                }
+            }
+        }
+        query.run {
+            addListenerForSingleValueEvent(valueEventListener)
+        }
 
-                        var loc = item.name!!
+    }
 
-                        set_Branch(loc,sending)
+    fun update_Branch(location: String, sending: MutableLiveData<Boolean>){
+        prefs.edit(commit = true) {
+            putString(PREF_Location_Id,location)
+        }
+        var query = FirebaseDatabase.getInstance().getReference("location")
+                .orderByKey().equalTo(location)
+
+        query.keepSynced(true)
+
+        var valueEventListener = object : ValueEventListener {
+            override fun onCancelled(snapshotError: DatabaseError) {
+                TODO("not implemented")
+            }
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (productSnapshot in snapshot!!.children) {
+
+                    val item: Location? = productSnapshot.getValue(Location::class.java)
+                    if (item != null) {
+                        prefs.edit(commit = true) {
+                            putString(PREF_BRANCH, item.name)
+                            putString(PREF_Location_Name, item.name)
+                        }
                     }
                 }
             }
@@ -218,30 +254,15 @@ class AuthRepository(
         }
     }
 
-    fun set_Branch(branch: String, sending: MutableLiveData<Boolean>){
-        executor.execute {
-            //sending.postValue(true)
-            try {
-                //val result = api.username(username)
-                prefs.edit(commit = true) {
-                    putString(PREF_BRANCH, branch)
-                }
-                //invokeSignInStateListeners(SignInState.SigningIn(username))
-            } finally {
-                sending.postValue(false)
-            }
-        }
-    }
-
-    fun set_Location(attendance: Attendance, sending: MutableLiveData<Boolean>){
+    fun set_GeoLocation(latitude: Double, longitude: Double, sending: MutableLiveData<Boolean>){
         executor.execute {
             //sending.postValue(true)
             try {
 
                 //val result = api.username(username)
                 prefs.edit(commit = true) {
-                    putString(PREF_latitude, attendance.latitude.toString())
-                    putString(PREF_longitude, attendance.longitude.toString())
+                    putString(PREF_latitude, latitude.toString())
+                    putString(PREF_longitude, longitude.toString())
                 }
                 getUserLocation(sending)
                 //invokeSignInStateListeners(SignInState.SigningIn(username))
@@ -252,19 +273,19 @@ class AuthRepository(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun get_Location(sending: MutableLiveData<Boolean>):Attendance{
+    fun get_AttendanceData(sending: MutableLiveData<Boolean>):Attendance{
         sending.postValue(true)
         try {
             val userId = prefs.getString(PREF_USERID, "")!!
             val code = prefs.getString(PREF_USERNAME, "")!!
             val name = prefs.getString(PREF_USERFULLNAME, "")!!
-            val location = prefs.getString(PREF_Location, "")!!
+            val locationId = prefs.getString(PREF_Location_Id, "")!!
+            val locationName = prefs.getString(PREF_Location_Name, "")!!
             val phoneNumber = prefs.getString(PREF_PHONENUMBER, "")!!
-            val branch = prefs.getString(PREF_BRANCH, "")!!
             val lat =  (prefs.getString(PREF_latitude, "")!!).toDouble()
             val long = (prefs.getString(PREF_longitude, "")!!).toDouble()
             val date = ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT )
-            return Attendance(0,userId,phoneNumber,date ,"",location, lat, long)
+            return Attendance(0,userId,name,phoneNumber,date ,"",locationId,locationName, lat, long)
         } finally {
             sending.postValue(false)
         }
@@ -279,10 +300,13 @@ class AuthRepository(
                     putString(PREF_USERID, user.user)
                     putString(PREF_USERNAME, user.code)
                     putString(PREF_USERFULLNAME, user.name)
-                    putString(PREF_Location, user.location)
+                    putString(PREF_Location_Id, user.location)
+                    putString(PREF_Location_Name, user.branch)
                     putString(PREF_PHONENUMBER, user.phoneNumber)
                     putString(PREF_BRANCH, user.branch)
                 }
+
+                set_UserLocation(user.location,sending);
                 //invokeSignInStateListeners(SignInState.SigningIn(username))
             } finally {
                 sending.postValue(false)
@@ -296,13 +320,11 @@ class AuthRepository(
             val userId = prefs.getString(PREF_USERID, "")!!
             val code = prefs.getString(PREF_USERNAME, "")!!
             val name = prefs.getString(PREF_USERFULLNAME, "")!!
-            val location = prefs.getString(PREF_Location, "")!!
+            val location = prefs.getString(PREF_Location_Id, "")!!
             val phoneNumber = prefs.getString(PREF_PHONENUMBER, "")!!
             val branch = prefs.getString(PREF_BRANCH, "")!!
 
-            val user = Employee(userId,code,name,phoneNumber, location,branch,"",true)
-
-            return user
+            return Employee(userId,code,name,phoneNumber, location,branch,"",true)
         } finally {
             sending.postValue(false)
         }
@@ -310,14 +332,12 @@ class AuthRepository(
 
     fun username(username: String, sending: MutableLiveData<Boolean>) {
         executor.execute {
-            //sending.postValue(true)
             try {
-                //val result = api.username(username)
                 prefs.edit(commit = true) {
-                    //putString(PREF_USERNAME, result)
+
                     putString(PREF_USERNAME, username)
                 }
-                //invokeSignInStateListeners(SignInState.SigningIn(username))
+
             } finally {
                 sending.postValue(false)
             }

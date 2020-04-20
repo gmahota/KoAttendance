@@ -7,15 +7,11 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.koattendance.data.Attendance
 import com.example.koattendance.repository.AuthRepository
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import java.time.Instant
-import java.util.*
 import kotlin.collections.HashMap
-import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -27,9 +23,15 @@ class AttendanceViewModel (application: Application) : AndroidViewModel(applicat
     private  lateinit var dbAttendace: DatabaseReference
 
     private val _text = MutableLiveData<String>().apply {
-        value = "This is Attendance Fragment"
+
     }
     val text: LiveData<String> = _text
+
+    private val _text_msg= MutableLiveData<String>().apply {
+
+    }
+    val text_msg: LiveData<String> = _text_msg
+
 
     private val repository = AuthRepository.getInstance(application)
 
@@ -66,13 +68,14 @@ class AttendanceViewModel (application: Application) : AndroidViewModel(applicat
         // Create new post at /user-posts/$userid/$postid and at
         // /posts/$postid simultaneously
         val key = database.child("Attendance").push().key
+
         if (key == null) {
             Log.w("App_Attendance", "Couldn't get push key for posts")
             return
         }
-        val user = repository.get_User(_processing)
 
-        val attendance = repository.get_Location(_processing)
+        val attendance = repository.get_AttendanceData(_processing)
+
         attendance.type = type
         attendance.dateTime = ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT )
 
@@ -80,9 +83,16 @@ class AttendanceViewModel (application: Application) : AndroidViewModel(applicat
 
         val childUpdates = HashMap<String, Any>()
         childUpdates["/attendance/$key"] = attendanceValues
-        //childUpdates["/user-posts/$userId/$key"] = attendanceValues
 
         database.updateChildren(childUpdates)
+
+        if(type == "Clock-In"){
+            _text_msg.value = "Bom trabalho " +attendance.name;
+            _text.value = "Hora de Saida - "  + attendance.dateTimeToString() +"\n" +"Posto:" + attendance.location;
+        }else{
+            _text_msg.value = "Bom Descanso, até amanhã - " +attendance.name;
+            _text.value = "Hora de Entrada - " + attendance.dateTimeToString()+"\n" +"Posto:" + attendance.location;
+        }
     }
 
 
