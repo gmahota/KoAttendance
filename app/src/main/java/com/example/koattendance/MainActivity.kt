@@ -46,12 +46,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
 
     private lateinit var appBarConfiguration: AppBarConfiguration
+    
     val PERMISSION_ID = 42
+    
     lateinit var mFusedLocationClient: FusedLocationProviderClient
+    
+    var conn: CheckConnection? = null
+
+    private val mHandler = Handler()
+    
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        
+        conn = CheckConnection()
+        mHandler.postDelayed(mToasRunnable, 500)
+        
         val toolbar: Toolbar = findViewById(R.id.toolbar)
 
         setSupportActionBar(toolbar)
@@ -84,16 +95,19 @@ class MainActivity : AppCompatActivity() {
         getLastLocation()
     }
 
+    /*
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)
         return true
     }
-
+    */
+    
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
+    
 
     private val mLocationCallback = object : LocationCallback() {
         @RequiresApi(Build.VERSION_CODES.O)
@@ -186,6 +200,13 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         viewModel.setFido2ApiClient(null)
+    }
+    
+   private val mToasRunnable: Runnable = object : Runnable {
+        override fun run() {
+            conn!!.run(this@MainActivity, findViewById(R.id.drawer_layout))
+            mHandler.postDelayed(this, 7000)
+        }
     }
 
 }
