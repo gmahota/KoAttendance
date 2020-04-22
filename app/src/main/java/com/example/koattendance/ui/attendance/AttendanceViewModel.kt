@@ -62,7 +62,6 @@ class AttendanceViewModel (application: Application) : AndroidViewModel(applicat
         return isValidate;
     }
 
-
     @RequiresApi(Build.VERSION_CODES.O)
     fun writeAttendance(type: String) {
         // Create new post at /user-posts/$userid/$postid and at
@@ -87,11 +86,11 @@ class AttendanceViewModel (application: Application) : AndroidViewModel(applicat
         database.updateChildren(childUpdates)
 
         if(type == "Clock-In"){
-            _text_msg.value = "Bom trabalho " +attendance.name;
-            _text.value = "Hora de Saida - "  + attendance.dateTimeToString() +"\n" +"Posto:" + attendance.location;
+            _text_msg.value = "Sr(a) " +attendance.name;
+            _text.value = "Clock-In with Sucess - "  + attendance.dateTimeToString() +"\n" +"Posto:" + attendance.location;
         }else{
-            _text_msg.value = "Bom Descanso, até amanhã - " +attendance.name;
-            _text.value = "Hora de Entrada - " + attendance.dateTimeToString()+"\n" +"Posto:" + attendance.location;
+            _text_msg.value = "Sr(a) " +attendance.name;
+            _text.value = "Clock-Out with Sucess - " + attendance.dateTimeToString()+"\n" +"Posto:" + attendance.location;
         }
     }
 
