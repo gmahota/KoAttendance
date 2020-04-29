@@ -7,32 +7,34 @@
 
     <fragment
         android:id="@+id/nav_home"
-        android:name="com.example.koattendance.ui.home.HomeFragment"
+        android:name="com.mahotaservicos.koattendance.ui.home.HomeFragment"
         android:label="@string/menu_home"
         tools:layout="@layout/fragment_home"/>
 
     <fragment
         android:id="@+id/nav_auth"
-        android:name="com.example.koattendance.ui.auth_new.AuthFragment"
-        android:label="@string/menu_gallery"
+        android:name="com.mahotaservicos.koattendance.ui.auth_new.AuthFragment"
+        android:label="@string/menu_auth"
         tools:layout="@layout/fragment_auth" />
+
+    <fragment
+        android:id="@+id/nav_attendance"
+        android:name="com.mahotaservicos.koattendance.ui.attendance.AttendanceFragment"
+        android:label="Attendance"
+        tools:layout="@layout/fragment_attendance" />
 
 
     <fragment
         android:id="@+id/nav_gallery"
-        android:name="com.example.koattendance.ui.gallery.GalleryFragment"
+        android:name="com.mahotaservicos.koattendance.ui.gallery.GalleryFragment"
         android:label="@string/menu_gallery"
         tools:layout="@layout/fragment_gallery" />
 
     <fragment
         android:id="@+id/nav_slideshow"
-        android:name="com.example.koattendance.ui.slideshow.SlideshowFragment"
+        android:name="com.mahotaservicos.koattendance.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_slideshow"
         tools:layout="@layout/fragment_slideshow" />
 
-    <fragment
-        android:id="@+id/nav_attendance"
-        android:name="com.example.koattendance.ui.attendance.AttendanceFragment"
-        android:label="Attendance"
-        tools:layout="@layout/fragment_attendance" />
+
 </navigation>

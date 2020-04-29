@@ -23,7 +23,7 @@
 
         <variable
             name="viewModel"
-            type="com.example.koattendance.ui.username.UsernameViewModel" />
+            type="com.mahotaservicos.koattendance.ui.username.UsernameViewModel" />
 
     </data>
 

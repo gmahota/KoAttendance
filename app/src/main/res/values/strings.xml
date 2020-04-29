@@ -80,5 +80,6 @@
     <string name="usendit_password">AgnesZoe1518!</string>
     <string name="saida_clock_out">Saida/Clock-Out</string>
     <string name="entrada_clock_in">Entrada/Clock-In</string>
+    <string name="menu_auth">Register</string>
 
 </resources>

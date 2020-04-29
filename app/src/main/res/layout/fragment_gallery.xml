@@ -46,7 +46,8 @@
             android:padding="8dp"
             android:freezesText="true"
             android:textAlignment="center"
-            tools:text="An Error Ocurred\n\nError Name:\nFake Error Name\n\nError Message:\nFake Error Message" />
+            tools:text="An Error Ocurred\n\nError Name:\nFake Error Name\n\nError Message:\nFake Error Message"
+            android:gravity="center_horizontal" />
 
     </ScrollView>
 

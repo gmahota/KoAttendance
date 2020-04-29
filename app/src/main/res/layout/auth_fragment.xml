@@ -23,7 +23,7 @@
 
         <variable
             name="viewModel"
-            type="com.example.koattendance.ui.auth.AuthViewModel" />
+            type="com.mahotaservicos.koattendance.ui.auth.AuthViewModel" />
 
     </data>
 
