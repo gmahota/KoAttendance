@@ -71,15 +71,14 @@
 
     <string name="register_fido2">Register FIDO2</string>
     <string name="login_fido2">Sign FIDO2</string>
-    <string name="phone">Nr. Telefone</string>
-    <string name="validationCode" >Codigo Validação</string>
+    <string name="phone">CellPhone</string>
+    <string name="validationCode" >Code Validation</string>
     <string name="sign_in_explanation3">OU</string>
     <string name="validate">validar</string>
     <string name="validationAlert">Dirija-se à sua caixa de mensagens e copie o código de validação apresentado</string>
-    <string name="usendit_user">mahotag</string>
-    <string name="usendit_password">AgnesZoe1518!</string>
     <string name="saida_clock_out">Saida/Clock-Out</string>
     <string name="entrada_clock_in">Entrada/Clock-In</string>
     <string name="menu_auth">Register</string>
+    <string name="register">Register</string>
 
 </resources>

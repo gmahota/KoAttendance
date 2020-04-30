@@ -64,7 +64,7 @@ class AttendanceFragment : Fragment() {
             txtData.text = it
         })
 
-        var txtMsg =root.findViewById(R.id.txt_Local) as TextView
+        var txtMsg =root.findViewById(R.id.txtOutros) as TextView
         attendanceViewModel.text_msg.observe(viewLifecycleOwner, Observer {
             txtMsg.text = it
         })
