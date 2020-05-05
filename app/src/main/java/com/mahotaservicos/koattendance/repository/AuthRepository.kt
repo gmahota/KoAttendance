@@ -286,7 +286,10 @@ class AuthRepository(
             val long = (prefs.getString(PREF_longitude, "")!!).toDouble()
             val date = ZonedDateTime.now( ZoneOffset.UTC ).format( DateTimeFormatter.ISO_INSTANT )
             return Attendance(0,userId,name,phoneNumber,date ,"",locationId,locationName, lat, long)
-        } finally {
+        }catch (e:Exception){
+            throw e;
+        }
+        finally {
             sending.postValue(false)
         }
     }

@@ -9,12 +9,20 @@
         android:largeScreens="true"
         android:xlargeScreens="true"/>
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+
+    <!-- Step 1: Add the following permission to the app  -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- Step 2: This permission is depreciated in Android P  -->
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <application
         android:allowBackup="true"

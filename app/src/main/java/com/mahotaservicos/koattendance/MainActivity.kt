@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity() {
                         viewModel._lat.value = location.latitude
                         viewModel._long.value = location.longitude
 
-                        //viewModel.setAttendance()
+                        viewModel.setAttendance()
                     }
                 }
 

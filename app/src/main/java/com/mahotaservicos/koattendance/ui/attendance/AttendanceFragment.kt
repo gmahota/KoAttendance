@@ -1,9 +1,10 @@
 package com.mahotaservicos.koattendance.ui.attendance
 
+import android.Manifest
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.security.keystore.KeyGenParameterSpec
+
 import android.security.keystore.KeyProperties
 import android.util.Log
 import android.view.LayoutInflater
@@ -17,28 +18,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.mahotaservicos.koattendance.R
-import java.security.Key
-import java.security.KeyStore
 import java.util.concurrent.Executor
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.IvParameterSpec
 import android.content.SharedPreferences
-import android.util.Base64
+import android.content.pm.PackageManager
 import android.widget.*
+import androidx.core.app.ActivityCompat
 
-import androidx.core.content.edit
-import com.mahotaservicos.koattendance.DEFAULT_KEY_NAME
-import com.google.firebase.database.DatabaseReference
-import java.time.LocalDateTime
 
-import java.util.concurrent.Executors
-
-@RequiresApi(Build.VERSION_CODES.M)
 class AttendanceFragment : Fragment() {
-
-    private lateinit var database: DatabaseReference
 
     private lateinit var attendanceViewModel: AttendanceViewModel
 
@@ -46,9 +33,7 @@ class AttendanceFragment : Fragment() {
     private lateinit var biometricPrompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
 
-
     private lateinit var sharedPreferences: SharedPreferences
-    private val keyStore: KeyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -75,6 +60,7 @@ class AttendanceFragment : Fragment() {
         var isValidated = attendanceViewModel.getUserIsValidaded()
 
         if(!isValidated){
+
             btn_login.isEnabled = false
             btn_logout.isEnabled = false
 
@@ -88,29 +74,12 @@ class AttendanceFragment : Fragment() {
         sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(activity)
 
         btn_login.setOnClickListener {
-
-            encryptPrompt(
-                data = DEFAULT_KEY_NAME.toByteArray(),
-                failedAction = { Log.e("e","encrypt failed") },
-                successAction = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        attendanceViewModel.writeAttendance("Clock-In")
-                    }
-                }
-            )
+            initBiometric("Clock-In")
         }
 
         btn_logout.setOnClickListener{
-            encryptPrompt(
-                    data = DEFAULT_KEY_NAME.toByteArray(),
-                    failedAction = { Log.e("e","encrypt failed") },
-                    successAction = {
+            initBiometric("Clock-Out")
 
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            attendanceViewModel.writeAttendance( "Clock-Out")
-                        }
-                    }
-            )
         }
         return root
     }
@@ -132,7 +101,7 @@ class AttendanceFragment : Fragment() {
         }
     }
 
-    private  fun initBiometric(){
+    private  fun initBiometric(type:String){
         // clearing user_name and password edit text views on reset button click
         val context: Context = context!!
         executor = ContextCompat.getMainExecutor(context)
@@ -144,16 +113,15 @@ class AttendanceFragment : Fragment() {
 
                     Toast.makeText(context,
                             "Authentication error: $errString", Toast.LENGTH_SHORT)
-                        .show()
                 }
 
+                @RequiresApi(Build.VERSION_CODES.O)
                 override fun onAuthenticationSucceeded(
                     result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
 
-                    Toast.makeText(context,
-                            "Authentication succeeded!",  Toast.LENGTH_SHORT)
-                        .show()
+                    attendanceViewModel.writeAttendance(type)
+
 
                 }
 
@@ -167,152 +135,12 @@ class AttendanceFragment : Fragment() {
 
         promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Biometric login for my app")
-            .setSubtitle("Log in using your biometric credential")
-            .setNegativeButtonText("Use account password")
-            .build()
-    }
-
-    fun decryptPrompt(failedAction: () -> Unit, successAction: (ByteArray) -> Unit) {
-        try {
-            val secretKey = getKey()
-            val initializationVector = getInitializationVector()
-            if (secretKey != null && initializationVector != null) {
-                val cipher = getDecryptCipher(secretKey, initializationVector)
-                handleDecrypt(cipher, failedAction, successAction)
-            } else {
-                failedAction()
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "Decrypt BiometricPrompt exception", e)
-            failedAction()
-        }
-    }
-
-    fun encryptPrompt(
-        data: ByteArray,
-        failedAction: () -> Unit,
-        successAction: (ByteArray) -> Unit
-    ) {
-        try {
-            val secretKey = createKey()
-            val cipher = getEncryptCipher(secretKey)
-            handleEncrypt(cipher, data, failedAction, successAction)
-        } catch (e: Exception) {
-            Log.d(TAG, "Encrypt BiometricPrompt exception", e)
-            failedAction()
-        }
-    }
-
-    private fun getKey(): Key? = keyStore.getKey(KEY_NAME, null)
-
-    private fun createKey(): SecretKey {
-        val keyGenerator = KeyGenerator.getInstance(ALGORITHM, KEYSTORE)
-        val keyGenParameterSpec =
-            KeyGenParameterSpec.Builder(KEY_NAME, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-                .setBlockModes(BLOCK_MODE)
-                .setEncryptionPaddings(PADDING)
-                .setUserAuthenticationRequired(true)
-                .build()
-
-        keyGenerator.init(keyGenParameterSpec)
-        return keyGenerator.generateKey()
-    }
-
-    private fun getInitializationVector(): ByteArray? {
-        val iv = sharedPreferences.getString(INITIALIZATION_VECTOR, null)
-        return when {
-            iv != null -> Base64.decode(iv, Base64.DEFAULT)
-            else -> null
-        }
-    }
-
-    private fun getEncryptedData(): ByteArray? {
-        val iv = sharedPreferences.getString(DATA_ENCRYPTED, null)
-        return when {
-            iv != null -> Base64.decode(iv, Base64.DEFAULT)
-            else -> null
-        }
-    }
-
-    private fun saveEncryptedData(dataEncrypted: ByteArray, initializationVector: ByteArray) {
-        sharedPreferences.edit {
-            putString(DATA_ENCRYPTED, Base64.encodeToString(dataEncrypted, Base64.DEFAULT))
-            putString(INITIALIZATION_VECTOR, Base64.encodeToString(initializationVector, Base64.DEFAULT))
-        }
-    }
-
-    private fun getDecryptCipher(key: Key, iv: ByteArray): Cipher =
-        Cipher.getInstance(keyTransformation()).apply { init(Cipher.DECRYPT_MODE, key, IvParameterSpec(iv)) }
-
-    private fun getEncryptCipher(key: Key): Cipher =
-        Cipher.getInstance(keyTransformation()).apply { init(Cipher.ENCRYPT_MODE, key) }
-
-    private fun handleDecrypt(
-        cipher: Cipher,
-        failedAction: () -> Unit,
-        successAction: (ByteArray) -> Unit
-    ) {
-
-        val executor = Executors.newSingleThreadExecutor()
-        val biometricPrompt = BiometricPrompt(this, executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                super.onAuthenticationSucceeded(result)
-                result.cryptoObject?.cipher?.let { cipher ->
-                    val encrypted = getEncryptedData()
-                    val data = cipher.doFinal(encrypted)
-                    activity?.runOnUiThread { successAction(data) }
-                }
-            }
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                super.onAuthenticationError(errorCode, errString)
-                Log.d(TAG, "Authentication error. $errString ($errorCode)")
-                activity?.runOnUiThread { failedAction() }
-            }
-        })
-
-        val promptInfo = biometricPromptInfo()
-        biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
-    }
-
-    private fun handleEncrypt(
-        cipher: Cipher,
-        data: ByteArray,
-        failedAction: () -> Unit,
-        successAction: (ByteArray) -> Unit
-    ) {
-
-        val executor = Executors.newSingleThreadExecutor()
-        val biometricPrompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                super.onAuthenticationSucceeded(result)
-                result.cryptoObject?.cipher?.let { resultCipher ->
-                    val iv = resultCipher.iv
-                    val encryptedData = resultCipher.doFinal(data)
-                    saveEncryptedData(encryptedData, iv)
-                    activity?.runOnUiThread { successAction(encryptedData) }
-                }
-            }
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                super.onAuthenticationError(errorCode, errString)
-                Log.d(TAG, "Authentication error. $errString ($errorCode)")
-                activity?.runOnUiThread { failedAction() }
-            }
-        })
-
-        val promptInfo = biometricPromptInfo()
-        biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
-    }
-
-    private fun biometricPromptInfo(): BiometricPrompt.PromptInfo {
-        return BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Prompt Title")
-            .setSubtitle("Prompt Subtitle")
-            .setDescription("Prompt Description: lorem ipsum dolor sit amet.")
+            .setSubtitle("Make your clock time with your biometric credential")
+            .setDescription("Time Clock With Biometric.")
             .setNegativeButtonText("Cancel?")
             .build()
+
+        biometricPrompt.authenticate(promptInfo)
     }
 
     companion object {
